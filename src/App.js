@@ -83,6 +83,10 @@ function ButtonsRow({ onPress, disabled }) {
 export default function App() {
 
   const [screen, setScreen] = useState('home'); // 'home' or 'game'
+  const [moeda, setMoeda] = useState(null); 
+  const [coin, setCoin] = useState(null); 
+  const [qtdmoeda, setQtdmoeda] = useState(0);
+  const [flipping, setFlipping] = useState(false);
   const [playerConfigs, setPlayerConfigs] = useState([
     { id: 1, name: 'Jogador 1'},
     { id: 2, name: 'Jogador 2'},
@@ -118,6 +122,22 @@ export default function App() {
     setScreen('game');
   }
 
+  const flipCoin = () => {
+    setFlipping(true);
+    setMoeda("Jogando...");
+
+    setTimeout(() => {
+      const result = Math.random() < 0.5 ? "Cara" : "Coroa";
+      setMoeda(result === "Cara" ? result + " (+)" : result + " (0)");
+      setCoin(result);
+      setQtdmoeda((prev) => prev + 1)
+      setFlipping(false);
+
+      setTimeout(() => {
+        setCoin(null);
+      }, 1000);
+    }, 1000);
+  };
 
   // New state to track winner
   const [winner, setWinner] = useState(null);
@@ -192,6 +212,8 @@ export default function App() {
       }))
     );
     setWinner(null);
+    setMoeda("N/A");
+    setQtdmoeda(0);
   }
 
   return (
@@ -240,10 +262,28 @@ export default function App() {
             <button onClick={restartGame} style={styles.headerBtn}>
               Reiniciar Jogo
             </button>
+            <button onClick={flipCoin} style={styles.headerBtn}>
+              Jogar uma moeda
+            </button>
             <button onClick={() => setScreen('home')} style={styles.headerBtn}>
               Novo Jogo
             </button>
           </header>
+
+          <div>
+            <p style={{display: "flex", alignItems: "center"}}>
+              Última moeda (nº {qtdmoeda}): {moeda}
+              {flipping ? (
+                <img src={`${process.env.PUBLIC_URL}/flipcoin.gif`} alt="Flipping..." width="70" style={{ marginLeft: 20 }}/>
+              ) : coin ? (
+                <img src={`${process.env.PUBLIC_URL}/${coin}.png`} alt={coin} width="70" style={{ marginLeft: 20 }}/>
+              ) : (
+                <div style={{height: "70px", width: "70px"}}></div> // placeholder
+              )}
+            </p>
+            
+            
+          </div>
 
           <div>
             {players.map((player) => (
