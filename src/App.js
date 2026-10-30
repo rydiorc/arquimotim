@@ -2,15 +2,27 @@ import React, { useState, useEffect } from 'react';
 
 const BUTTON_DELTAS = [1, 2, 4, -1, -2, -4];
 const playerColors = [
-    "#e6194b", // red
-    "#3cb44b", // green
-    "#ffe119", // yellow
-    "#4363d8", // blue
-    "#f58231", // orange
-    "#911eb4", // purple
-    "#46f0f0", // cyan
-    "#f032e6", // magenta
-  ];
+  "#e6194b", // red
+  "#3cb44b", // green
+  "#ffe119", // yellow
+  "#4363d8", // blue
+  "#f58231", // orange
+  "#911eb4", // purple
+  "#46f0f0", // cyan
+  "#f032e6", // magenta
+];
+
+// Cores dos campos
+const FIELD_COLORS = {
+  pc: '#e6194b', // Coletivo - vermelho
+  pi: '#4363d8', // Individual - azul
+};
+const FIELD_NAMES = {
+  pc: 'Coletivo',
+  pi: 'Individual',
+};
+
+// ---------- PlayerRow: mesmo estilo do player, com dois lados ----------
 function PlayerRow({ player, onAdjust, gameOver }) {
   const isEliminated = player.status === 'lost';
   const isWinner = player.status === 'won';
@@ -28,26 +40,38 @@ function PlayerRow({ player, onAdjust, gameOver }) {
       }}
     >
       <div style={styles.playerTitle}>
-        <div style={{ color: player.color, fontWeight: "bold" }}>
+        <div style={{ color: player.color, fontWeight: 'bold' }}>
           {player.name} {isWinner ? '🏆' : isEliminated ? '❌' : ''}
         </div>
       </div>
       <div style={styles.countersContainer}>
+        {/* Lado Coletivo (vermelho) */}
         <div style={styles.counterSection}>
-          <div style={styles.counterLabel}>PC</div>
-          <div style={styles.counterValue}>{player.pc}</div>
+          <div style={{ ...styles.counterLabel, color: FIELD_COLORS.pc }}>
+            {FIELD_NAMES.pc}
+          </div>
+          <div style={{ ...styles.counterValue, color: FIELD_COLORS.pc }}>
+            {player.pc}
+          </div>
           <ButtonsRow
             onPress={(delta) => onAdjust(player.id, 'pc', delta)}
             disabled={isEliminated || gameOver}
+            color={FIELD_COLORS.pc}
           />
         </div>
         <div style={styles.separator} />
+        {/* Lado Individual (azul) */}
         <div style={styles.counterSection}>
-          <div style={styles.counterLabel}>PI</div>
-          <div style={styles.counterValue}>{player.pi}</div>
+          <div style={{ ...styles.counterLabel, color: FIELD_COLORS.pi }}>
+            {FIELD_NAMES.pi}
+          </div>
+          <div style={{ ...styles.counterValue, color: FIELD_COLORS.pi }}>
+            {player.pi}
+          </div>
           <ButtonsRow
             onPress={(delta) => onAdjust(player.id, 'pi', delta)}
             disabled={isEliminated || gameOver}
+            color={FIELD_COLORS.pi}
           />
         </div>
       </div>
@@ -55,7 +79,7 @@ function PlayerRow({ player, onAdjust, gameOver }) {
   );
 }
 
-function ButtonsRow({ onPress, disabled }) {
+function ButtonsRow({ onPress, disabled, color }) {
   return (
     <div style={styles.buttonsRow}>
       {BUTTON_DELTAS.map((d) => (
@@ -65,6 +89,7 @@ function ButtonsRow({ onPress, disabled }) {
           style={{
             ...styles.btn,
             color: d > 0 ? 'green' : 'red',
+            borderColor: color,
             cursor: disabled ? 'not-allowed' : 'pointer',
             opacity: disabled ? 0.4 : 1,
           }}
@@ -77,21 +102,90 @@ function ButtonsRow({ onPress, disabled }) {
   );
 }
 
+// ---------- GlobalAdjustPanel: mesmo layout, Coletivo | Individual ----------
+function GlobalAdjustPanel({ onApply, onDeclareWinner, gameOver, players }) {
+  const activePlayers = players.filter((p) => p.status === 'playing');
 
+  return (
+    <div style={styles.playerContainer}>
+      <div style={styles.playerTitle}>
+        <div style={{ color: '#333', fontWeight: 'bold', fontSize: 20 }}>
+          Ajuste Global
+        </div>
+      </div>
+      <div style={styles.countersContainer}>
+        {/* Lado Coletivo (vermelho) */}
+        <div style={styles.counterSection}>
+          <div style={{ ...styles.counterLabel, color: FIELD_COLORS.pc }}>
+            {FIELD_NAMES.pc}
+          </div>
+          <div style={{ ...styles.counterValue, color: FIELD_COLORS.pc }}>
+            —
+          </div>
+          <ButtonsRow
+            onPress={(delta) => onApply('pc', delta)}
+            disabled={gameOver || activePlayers.length === 0}
+            color={FIELD_COLORS.pc}
+          />
+        </div>
+        <div style={styles.separator} />
+        {/* Lado Individual (azul) */}
+        <div style={styles.counterSection}>
+          <div style={{ ...styles.counterLabel, color: FIELD_COLORS.pi }}>
+            {FIELD_NAMES.pi}
+          </div>
+          <div style={{ ...styles.counterValue, color: FIELD_COLORS.pi }}>
+            —
+          </div>
+          <ButtonsRow
+            onPress={(delta) => onApply('pi', delta)}
+            disabled={gameOver || activePlayers.length === 0}
+            color={FIELD_COLORS.pi}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
 
+// ---------- Histórico ----------
+function HistoryLog({ history }) {
+  if (history.length === 0) return null;
+  return (
+    <div style={styles.historyContainer}>
+      <div style={styles.historyTitle}>📜 Histórico</div>
+      <div style={styles.historyList}>
+        {history.map((h, i) => (
+          <div
+            key={i}
+            style={{
+              ...styles.historyItem,
+              borderLeft: `4px solid ${FIELD_COLORS[h.field] || '#999'}`,
+            }}
+          >
+            <span style={styles.historyTime}>{h.time}</span>
+            <span style={styles.historyText}>{h.text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
-
-  const [screen, setScreen] = useState('home'); // 'home' or 'game'
-  const [moeda, setMoeda] = useState(null); 
-  const [coin, setCoin] = useState(null); 
+  const [screen, setScreen] = useState('home');
+  const [moeda, setMoeda] = useState(null);
+  const [coin, setCoin] = useState(null);
   const [qtdmoeda, setQtdmoeda] = useState(0);
   const [flipping, setFlipping] = useState(false);
   const [playerConfigs, setPlayerConfigs] = useState([
-    { id: 1, name: 'Jogador 1'},
-    { id: 2, name: 'Jogador 2'},
+    { id: 1, name: 'Jogador 1' },
+    { id: 2, name: 'Jogador 2' },
   ]);
   const [players, setPlayers] = useState([]);
+  const [winner, setWinner] = useState(null);
+  const [tiebreakMessage, setTiebreakMessage] = useState(null);
+  const [history, setHistory] = useState([]);
 
   function addPlayer() {
     if (playerConfigs.length >= 8) return;
@@ -115,32 +209,42 @@ export default function App() {
       name: p.name.trim() || `Player ${p.id}`,
       pc: 30,
       pi: 15,
-      status: 'playing', // playing, won, lost
-      color: playerColors[i % playerColors.length],  // assign color here by index
+      status: 'playing',
+      color: playerColors[i % playerColors.length],
     }));
     setPlayers(initialPlayers);
     setScreen('game');
+    setWinner(null);
+    setTiebreakMessage(null);
+    setHistory([]);
   }
 
   const flipCoin = () => {
     setFlipping(true);
-    setMoeda("Jogando...");
+    setMoeda('Jogando...');
 
     setTimeout(() => {
-      const result = Math.random() < 0.5 ? "Cara" : "Coroa";
-      setMoeda(result === "Cara" ? result + " (+)" : result + " (0)");
+      const result = Math.random() < 0.5 ? 'Cara' : 'Coroa';
+      setMoeda(result === 'Cara' ? result + ' (+)' : result + ' (0)');
       setCoin(result);
-      setQtdmoeda((prev) => prev + 1)
+      setQtdmoeda((prev) => prev + 1);
       setFlipping(false);
-
+      pushHistory(`Moeda jogada: ${result}`);
       setTimeout(() => {
         setCoin(null);
       }, 1000);
     }, 1000);
   };
 
-  // New state to track winner
-  const [winner, setWinner] = useState(null);
+  // helper para registrar histórico
+  function pushHistory(text) {
+    const time = new Date().toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    setHistory((prev) => [{ time, text, key: Date.now() + Math.random() }, ...prev].slice(0, 30));
+  }
 
   useEffect(() => {
     if (winner) {
@@ -148,60 +252,123 @@ export default function App() {
     }
   }, [winner]);
 
+  // Lógica central de verificação (mesma do anterior)
+  function evaluateState(updated) {
+    let winners = [];
+
+    updated = updated.map((p) => {
+      if (p.status !== 'playing') return p;
+      if (p.pc >= 60 || p.pi <= 0) {
+        winners.push({ id: p.id, name: p.name });
+        return { ...p, status: 'won' };
+      }
+      return p;
+    });
+
+    if (winners.length > 0) {
+      updated = updated.map((p) => {
+        if (p.status === 'won') return p;
+        return { ...p, status: 'lost' };
+      });
+      return { updated, winners };
+    }
+
+    updated = updated.map((p) => {
+      if (p.status !== 'playing') return p;
+      if (p.pc <= p.pi) {
+        return { ...p, status: 'lost' };
+      }
+      return p;
+    });
+
+    const activePlayers = updated.filter((p) => p.status === 'playing');
+    if (activePlayers.length === 1) {
+      winners = [{ id: activePlayers[0].id, name: activePlayers[0].name }];
+      const survivorId = activePlayers[0].id;
+      updated = updated.map((p) =>
+        p.id === survivorId
+          ? { ...p, status: 'won' }
+          : { ...p, status: 'lost' }
+      );
+    }
+
+    return { updated, winners };
+  }
+
+  function finalizeWinners(winners, tiebreakWinnerId, logText) {
+    if (winners.length === 0) return;
+
+    if (winners.length === 1) {
+      setWinner(winners[0].name);
+      setTiebreakMessage(null);
+      pushHistory(`${logText} → 🏆 ${winners[0].name} venceu!`);
+      return;
+    }
+
+    const names = winners.map((w) => w.name).join(', ');
+
+    if (tiebreakWinnerId != null) {
+      const tieWinner = winners.find((w) => w.id === tiebreakWinnerId);
+      if (tieWinner) {
+        setWinner(`${tieWinner.name} (desempate por carta)`);
+        setTiebreakMessage(
+          `Empate entre: ${names}. Vencedor por desempate (quem jogou a carta): ${tieWinner.name}`
+        );
+        pushHistory(
+          `${logText} → Empate (${names}). Desempate: ${tieWinner.name} jogou a carta e venceu!`
+        );
+        return;
+      }
+    }
+
+    setTiebreakMessage(
+      `Empate entre: ${names}. Ganha quem jogou a carta.`
+    );
+    setWinner(null);
+    pushHistory(`${logText} → Empate entre: ${names}.`);
+  }
+
   function adjustPoints(id, field, delta) {
     setPlayers((prev) => {
-      let updated = prev.map((p) => {
+      const target = prev.find((p) => p.id === id);
+      const updated = prev.map((p) => {
         if (p.id !== id) return p;
         const newVal = Math.max(0, p[field] + delta);
         return { ...p, [field]: newVal };
       });
 
-      let winnerFound = null;
-
-      // --- win check ---
-      updated = updated.map((p) => {
-        if (p.status !== 'playing') return p;
-        if (p.pc >= 60 || p.pi <= 0) {
-          if (!winnerFound) winnerFound = p.name;
-          return { ...p, status: 'won' };
-        }
-        return p;
-      });
-
-      // --- lose check ---
-      if (!winnerFound) {
-        updated = updated.map((p) => {
-          if (p.status !== 'playing') return p;
-          if (p.pc <= p.pi) {
-            return { ...p, status: 'lost' };
-          }
-          return p;
-        });
-      }
-
-      // --- last survivor ---
-      if (!winnerFound) {
-        const activePlayers = updated.filter((p) => p.status === 'playing');
-        if (activePlayers.length === 1) {
-          winnerFound = activePlayers[0].name;
-          updated = updated.map((p) =>
-            p.id === activePlayers[0].id
-              ? { ...p, status: 'won' }
-              : { ...p, status: 'lost' }
-          );
-        }
-      }
-
-      if (winnerFound) {
-        setWinner(winnerFound); // <-- trigger alert in useEffect
-        updated = updated.map((p) =>
-          p.status === 'won' ? p : { ...p, status: 'lost' }
-        );
-      }
-
-      return updated;
+      const { updated: evaluated, winners } = evaluateState(updated);
+      const sign = delta > 0 ? `+${delta}` : `${delta}`;
+      const logText = `${target.name}: ${FIELD_NAMES[field]} ${sign}`;
+      finalizeWinners(winners, null, logText);
+      return evaluated;
     });
   }
+
+  function adjustAll(field, delta) {
+    setPlayers((prev) => {
+      const updated = prev.map((p) => {
+        if (p.status !== 'playing') return p;
+        const newVal = Math.max(0, p[field] + delta);
+        return { ...p, [field]: newVal };
+      });
+
+      const { updated: evaluated, winners } = evaluateState(updated);
+      const sign = delta > 0 ? `+${delta}` : `${delta}`;
+      const logText = `Todos: ${FIELD_NAMES[field]} ${sign}`;
+      finalizeWinners(winners, null, logText);
+      return evaluated;
+    });
+  }
+
+  function declareTiebreakWinner(playerId) {
+    setPlayers((prev) => {
+      const { updated: evaluated, winners } = evaluateState(prev);
+      finalizeWinners(winners, playerId, 'Desempate');
+      return evaluated;
+    });
+  }
+
   function restartGame() {
     setPlayers((prev) =>
       prev.map((p) => ({
@@ -212,8 +379,11 @@ export default function App() {
       }))
     );
     setWinner(null);
-    setMoeda("N/A");
+    setTiebreakMessage(null);
+    setMoeda('N/A');
     setQtdmoeda(0);
+    setHistory([]);
+    pushHistory('Jogo reiniciado.');
   }
 
   return (
@@ -250,7 +420,10 @@ export default function App() {
               )}
             </div>
           ))}
-          <button onClick={startGame} style={{ ...styles.startBtn, marginTop: 20 }}>
+          <button
+            onClick={startGame}
+            style={{ ...styles.startBtn, marginTop: 20 }}
+          >
             Novo Jogo
           </button>
         </div>
@@ -271,19 +444,38 @@ export default function App() {
           </header>
 
           <div>
-            <p style={{display: "flex", alignItems: "center"}}>
+            <p style={{ display: 'flex', alignItems: 'center' }}>
               Última moeda (nº {qtdmoeda}): {moeda}
               {flipping ? (
-                <img src={`${process.env.PUBLIC_URL}/flipcoin.gif`} alt="Flipping..." width="70" style={{ marginLeft: 20 }}/>
+                <img
+                  src={`${process.env.PUBLIC_URL}/flipcoin.gif`}
+                  alt="Flipping..."
+                  width="70"
+                  style={{ marginLeft: 20 }}
+                />
               ) : coin ? (
-                <img src={`${process.env.PUBLIC_URL}/${coin}.png`} alt={coin} width="70" style={{ marginLeft: 20 }}/>
+                <img
+                  src={`${process.env.PUBLIC_URL}/${coin}.png`}
+                  alt={coin}
+                  width="70"
+                  style={{ marginLeft: 20 }}
+                />
               ) : (
-                <div style={{height: "70px", width: "70px"}}></div> // placeholder
+                <div style={{ height: '70px', width: '70px' }}></div>
               )}
             </p>
-            
-            
           </div>
+
+          {tiebreakMessage && (
+            <div style={styles.tiebreakMessage}>{tiebreakMessage}</div>
+          )}
+
+          <GlobalAdjustPanel
+            onApply={adjustAll}
+            onDeclareWinner={declareTiebreakWinner}
+            gameOver={players.some((p) => p.status === 'won')}
+            players={players}
+          />
 
           <div>
             {players.map((player) => (
@@ -295,6 +487,8 @@ export default function App() {
               />
             ))}
           </div>
+
+          <HistoryLog history={history} />
         </div>
       )}
     </div>
@@ -369,9 +563,9 @@ const styles = {
     textAlign: 'center',
   },
   counterLabel: {
-    color: '#555',
     fontSize: 16,
     marginBottom: 6,
+    fontWeight: '700',
   },
   counterValue: {
     fontWeight: '700',
@@ -387,7 +581,7 @@ const styles = {
   btn: {
     padding: '8px 14px',
     borderRadius: 6,
-    border: '1px solid #ccc',
+    border: '0px solid #ccc',
     backgroundColor: '#eee',
     cursor: 'pointer',
     minWidth: 44,
@@ -398,5 +592,80 @@ const styles = {
     width: 1,
     backgroundColor: '#ccc',
     margin: '0 12px',
+  },
+  tiebreakSection: {
+    marginTop: 16,
+    paddingTop: 12,
+    borderTop: '1px dashed #aab',
+  },
+  tiebreakLabel: {
+    fontWeight: '700',
+    fontSize: 15,
+    marginBottom: 8,
+    color: '#333',
+  },
+  tiebreakPlayers: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tiebreakBtn: {
+    padding: '8px 16px',
+    borderRadius: 8,
+    border: '2px solid',
+    backgroundColor: '#fff',
+    cursor: 'pointer',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  tiebreakMessage: {
+    padding: 12,
+    marginBottom: 16,
+    backgroundColor: '#fff3cd',
+    border: '1px solid #ffc107',
+    borderRadius: 8,
+    fontWeight: '600',
+    color: '#856404',
+    textAlign: 'center',
+  },
+
+  // --- Histórico ---
+  historyContainer: {
+    marginTop: 24,
+    border: '1px solid #ccc',
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: '#fafafa',
+  },
+  historyTitle: {
+    fontWeight: '700',
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#333',
+  },
+  historyList: {
+    maxHeight: 220,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  },
+  historyItem: {
+    padding: '6px 10px',
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    fontSize: 13,
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center',
+  },
+  historyTime: {
+    color: '#888',
+    fontSize: 11,
+    fontVariantNumeric: 'tabular-nums',
+    minWidth: 60,
+  },
+  historyText: {
+    color: '#222',
   },
 };
