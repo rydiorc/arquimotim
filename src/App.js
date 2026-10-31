@@ -15,6 +15,8 @@ const playerColors = [
 const FIELD_COLORS = {
   pc: '#d32f2f', // Coletivo - vermelho
   pi: '#1976d2', // Individual - azul
+  pcBtn: '#ffc5c5', // Coletivo - vermelho
+  piBtn: '#c5e2ff', // Individual - azul
 };
 const FIELD_NAMES = {
   pc: 'Coletivo',
@@ -193,7 +195,7 @@ function PlayerRow({ player, onAdjust, gameOver }) {
           <ButtonsRow
             onPress={(delta) => onAdjust(player.id, 'pc', delta)}
             disabled={isEliminated || gameOver}
-            color={FIELD_COLORS.pc}
+            color={FIELD_COLORS.pcBtn}
           />
         </div>
         <div style={styles.separator} />
@@ -207,7 +209,7 @@ function PlayerRow({ player, onAdjust, gameOver }) {
           <ButtonsRow
             onPress={(delta) => onAdjust(player.id, 'pi', delta)}
             disabled={isEliminated || gameOver}
-            color={FIELD_COLORS.pi}
+            color={FIELD_COLORS.piBtn}
           />
         </div>
       </div>
@@ -226,6 +228,7 @@ function ButtonsRow({ onPress, disabled, color }) {
             ...styles.btn,
             color: d > 0 ? 'green' : 'red',
             borderColor: color,
+            backgroundColor:color,
             cursor: disabled ? 'not-allowed' : 'pointer',
             opacity: disabled ? 0.4 : 1,
           }}
@@ -246,7 +249,7 @@ function GlobalAdjustPanel({ onApply, onDeclareWinner, gameOver, players }) {
     <div style={styles.playerContainer}>
       <div style={styles.playerTitle}>
         <div style={{ color: '#333', fontWeight: 'bold', fontSize: 20 }}>
-          Ajuste Global
+          Todos:
         </div>
       </div>
       <div style={styles.countersContainer}>
@@ -254,13 +257,10 @@ function GlobalAdjustPanel({ onApply, onDeclareWinner, gameOver, players }) {
           <div style={{ ...styles.counterLabel, color: FIELD_COLORS.pc }}>
             {FIELD_NAMES.pc}
           </div>
-          <div style={{ ...styles.counterValue, color: FIELD_COLORS.pc }}>
-            —
-          </div>
           <ButtonsRow
             onPress={(delta) => onApply('pc', delta)}
             disabled={gameOver || activePlayers.length === 0}
-            color={FIELD_COLORS.pc}
+            color={FIELD_COLORS.pcBtn}
           />
         </div>
         <div style={styles.separator} />
@@ -268,38 +268,11 @@ function GlobalAdjustPanel({ onApply, onDeclareWinner, gameOver, players }) {
           <div style={{ ...styles.counterLabel, color: FIELD_COLORS.pi }}>
             {FIELD_NAMES.pi}
           </div>
-          <div style={{ ...styles.counterValue, color: FIELD_COLORS.pi }}>
-            —
-          </div>
           <ButtonsRow
             onPress={(delta) => onApply('pi', delta)}
             disabled={gameOver || activePlayers.length === 0}
-            color={FIELD_COLORS.pi}
+            color={FIELD_COLORS.piBtn}
           />
-        </div>
-      </div>
-
-      <div style={styles.tiebreakSection}>
-        <div style={styles.tiebreakLabel}>
-          🃏 Desempate: quem jogou a carta?
-        </div>
-        <div style={styles.tiebreakPlayers}>
-          {activePlayers.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => onDeclareWinner(p.id)}
-              disabled={gameOver}
-              style={{
-                ...styles.tiebreakBtn,
-                borderColor: p.color,
-                color: p.color,
-                opacity: gameOver ? 0.4 : 1,
-                cursor: gameOver ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {p.name}
-            </button>
-          ))}
         </div>
       </div>
     </div>
@@ -533,12 +506,12 @@ export default function App() {
     }
 
     setTiebreakMessage(
-      `Empate entre: ${names}. Selecione abaixo quem jogou a carta para desempatar.`
+      `Empate entre: ${names}. O vencedor é quem jogou a carta ou Fez a maior pontuação.`
     );
     setWinner(null);
     setShowWinnerPopup(false);
     pushHistory(
-      `${logText} → Empate entre: ${names}. Aguardando desempate.`,
+      `${logText} → Empate entre: ${names}.`,
       field,
       scope
     );
