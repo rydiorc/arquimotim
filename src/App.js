@@ -421,8 +421,8 @@ export default function App() {
     setMoeda('Jogando...');
 
     setTimeout(() => {
-      const result = Math.random() < 0.5 ? 'Cara' : 'Coroa';
-      setMoeda(result === 'Cara' ? result + ' (+)' : result + ' (0)');
+      const result = Math.random() < 0.5 ? 'cara' : 'coroa';
+      setMoeda(result === 'cara' ? result + ' (+)' : result + ' (0)');
       setCoin(result);
       setQtdmoeda((prev) => prev + 1);
       setFlipping(false);
@@ -666,7 +666,7 @@ export default function App() {
               Última moeda (nº {qtdmoeda}): {moeda}
               {flipping ? (
                 <img
-                  src={`${process.env.PUBLIC_URL}/flipcoin.gif`}
+                  src={`${process.env.PUBLIC_URL}/moeda_rotacao.gif`}
                   alt="Flipping..."
                   width="70"
                   style={{ marginLeft: 20 }}
